@@ -28,6 +28,7 @@ public class RobotContainer {
     public final Elbo m_elbo = new Elbo();
     public final Shoulder m_shoulder = new Shoulder();
     public final Chassis m_chassis = new Chassis();
+    public final Simm m_simulate = new Simm();
 
 // Joysticks
 private final XboxController xboxController1 = new XboxController(0);
