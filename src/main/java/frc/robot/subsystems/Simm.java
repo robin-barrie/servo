@@ -42,6 +42,7 @@ private WPI_TalonFX m_elboMotor;
 public boolean kInverted, kSensorPhase;
 public Integer kPid_ID;
 public double kP, kI, kD, kIz, kFF, kMaxForward, kMaxReverse, kNomForward, kNomReverse, allowableClosedLoopError;
+
 private final double kArmEncoderDistPerPulse;
 
   // Simulation classes help us simulate what's going on, including gravity.
@@ -81,12 +82,14 @@ private final DCMotor m_armGearbox;
 //private final Encoder m_topEncoder, m_bottomEncoder;
 //private final ProfiledPIDController m_topController, m_bottomController;
 public double pidOutputTop, pidOutputBottom;
+public int topSetpoint, bottomSetpoint;
 
   // The P gain for the PID controller that drives this arm. 
   //private static final double kArmKp = 40.0;
   //private static final double kArmKi = 0.0;
 
   private final SingleJointedArmSim m_arm_topSim, m_arm_bottomSim;
+  TalonFXSimCollection m_elboMotorSim, m_shoulderMotorSim;
 
   //private EncoderSim m_topEncoderSim, m_bottomEncoderSim;
 
@@ -122,14 +125,15 @@ SendableChooser<Integer> presetChooser = new SendableChooser<Integer>();
       double armPivotX = 55; //65 in = center of 30.5 bumper starting at 49.75
       double armPivotY = 21.75;//in  
 
+    
 
        // initialize motor
         m_shoulderMotor  = new WPI_TalonFX(3, "rio");
         m_elboMotor  = new WPI_TalonFX(5, "rio");
 
       // Object for simulated inputs into Talon.
-        TalonFXSimCollection m_shoulderMotorSim = m_shoulderMotor.getSimCollection();
-        TalonFXSimCollection m_elboMotorSim = m_elboMotor.getSimCollection();
+      m_shoulderMotorSim = m_shoulderMotor.getSimCollection();
+      m_elboMotorSim = m_elboMotor.getSimCollection();
 
  
 
@@ -138,14 +142,14 @@ SendableChooser<Integer> presetChooser = new SendableChooser<Integer>();
       // PID coefficients
       //SET UP SEPERATE FOR EACH JOINT
           kPid_ID = 00;
-          kP = .1; 
+          kP = 40; 
           kI = 0;
           kD = 0; 
           kIz = 0; 
           kFF = 0; 
           allowableClosedLoopError = 200;
-          kMaxForward = 0.2; 
-          kMaxReverse = -0.2;
+          kMaxForward = 1.0; 
+          kMaxReverse = -1.0;
           kNomForward = 0.0;
           kNomReverse = -0.0;
           kInverted = false;
@@ -281,7 +285,7 @@ m_intake = m_arm_top.append(new MechanismLigament2d("Intake", 7, Units.radiansTo
     SmartDashboard.putNumber("Setpoint bottom (degrees)", 90);
 
     controlMode.setDefaultOption("Presets (Setpoints)", 0);
-    controlMode.addOption("Virtual Four Bar", 1);
+    controlMode.addOption("Joystick Control", 1);
     controlMode.addOption("Manual Angle Adjust", 2);
       SmartDashboard.putData(controlMode);
 
@@ -305,22 +309,18 @@ m_intake = m_arm_top.append(new MechanismLigament2d("Intake", 7, Units.radiansTo
 
         switch(controlMode.getSelected()){
           case 1:
-            // Here, we run PID control where the top arm acts like a four-bar relative to the bottom. 
+            // Here, we run PID control based on joystick inputs
+            
+            
+             
               break;
           case 2:
-            // Here, we run a PID control basesd on setpoints entered into SmartDashboard
-            //pidOutputTop = m_topController.calculate(m_topEncoder.getDistance(), Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint top (degrees)", 0), m_arm_top_min_angle, m_arm_top_max_angle)));
-            double elbo_setpoint = Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint top (degrees)", 0), m_arm_top_min_angle, m_arm_top_max_angle));
-            m_elboMotor.set(TalonFXControlMode.Position, elbo_setpoint);
-    
-            //pidOutputBottom = m_bottomController.calculate(m_bottomEncoder.getDistance(), Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint bottom (degrees)", 0), m_arm_bottom_min_angle, m_arm_bottom_max_angle)));
-            double shoulder_setpoint = Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint bottom (degrees)", 0), m_arm_bottom_min_angle, m_arm_bottom_max_angle));
-            m_shoulderMotor.set(TalonFXControlMode.Position, shoulder_setpoint);
-    
+            // Here, we run a PID control based on setpoints entered into SmartDashboard
+            topSetpoint = (int) Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint top (degrees)", 0), m_arm_top_min_angle, m_arm_top_max_angle));
+            bottomSetpoint = (int) Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint bottom (degrees)", 0), m_arm_bottom_min_angle, m_arm_bottom_max_angle));
             break;
           default: //also case 0
             //Run PID based on drop down menu of setpoints
-            int topSetpoint, bottomSetpoint;
             switch(presetChooser.getSelected()){
               case 0:
                 topSetpoint = stowedTop;
@@ -351,38 +351,48 @@ m_intake = m_arm_top.append(new MechanismLigament2d("Intake", 7, Units.radiansTo
                 bottomSetpoint = stowedBottom;
                 break;
             }
-            // Here, we run PID control where the arm moves to the selected setpoint.
-            pidOutputTop = m_topController.calculate(m_topEncoder.getDistance(), Units.degreesToRadians(topSetpoint - bottomSetpoint));
-            m_elboMotor.setVoltage(pidOutputTop);
-
-            pidOutputBottom = m_bottomController.calculate(m_bottomEncoder.getDistance(), Units.degreesToRadians(bottomSetpoint));
-            m_shoulderMotor.setVoltage(pidOutputBottom);
-
             SmartDashboard.putNumber("Setpoint bottom (degrees)", bottomSetpoint);
             SmartDashboard.putNumber("Setpoint top (degrees)", topSetpoint);
             break;
         }
+
+        // Here, we run PID control where the arm moves to the selected setpoint.
+        m_elboMotor.set(TalonFXControlMode.Position, MathUtil.clamp(topSetpoint, m_arm_top_min_angle, m_arm_top_max_angle) / 360 * 2048);
+        //m_shoulderMotor.set(TalonFXControlMode.Position, MathUtil.clamp(bottomSetpoint, m_arm_bottom_min_angle, m_arm_bottom_max_angle) / 360 * 2048);
+
+        m_shoulderMotor.set(TalonFXControlMode.Position, 1048);
+        SmartDashboard.putNumber("talon setpt", m_shoulderMotor.getClosedLoopTarget());
+        SmartDashboard.putNumber("shoulder sensor pos", m_shoulderMotor.getSelectedSensorPosition());
+
+
+
       }
 
 
     @Override
     public void simulationPeriodic() {
-        // This method will be called once per scheduler run when in simulation
+    // This method will be called once per scheduler run when in simulation
 
-            // In this method, we update our simulation of what our arm is doing
+    // In this method, we update our simulation of what our arm is doing
     // First, we set our "inputs" (voltages)
     //m_arm_topSim.setInput(m_elboMotor.get() * RobotController.getBatteryVoltage());
-    m_arm_topSim.setInput(m_elboMotor.getMotorOutputVoltage());
-    
-    m_arm_bottomSim.setInput(m_shoulderMotor.get() * RobotController.getBatteryVoltage());
+    m_elboMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
+    m_shoulderMotorSim.setBusVoltage(RobotController.getBatteryVoltage());
+    SmartDashboard.putNumber("simBattery", RobotController.getBatteryVoltage());
+
+    m_arm_topSim.setInput(m_elboMotorSim.getMotorOutputLeadVoltage());
+    m_arm_bottomSim.setInput(m_shoulderMotorSim.getMotorOutputLeadVoltage());
+    SmartDashboard.putNumber("m_elboMotorSim.outputVoltage", m_elboMotorSim.getMotorOutputLeadVoltage());
+    SmartDashboard.putNumber("m_shoulderMotorSim.outputVoltage", m_shoulderMotorSim.getMotorOutputLeadVoltage());
 
     // Next, we update it. The standard loop time is 20ms.
     m_arm_topSim.update(0.020);
     m_arm_bottomSim.update(0.020);
-//*********************
+
     // Finally, we set our simulated encoder's readings and simulated battery voltage
-    m_topEncoderSim.setDistance(m_arm_topSim.getAngleRads());
-    m_bottomEncoderSim.setDistance(m_arm_bottomSim.getAngleRads());
+    m_elboMotorSim.setIntegratedSensorRawPosition((int) (m_arm_topSim.getAngleRads()/(2*Math.PI) * 2048));
+    m_shoulderMotorSim.setIntegratedSensorRawPosition((int) (m_arm_bottomSim.getAngleRads()/(2*Math.PI) * 2048));
+
     // SimBattery estimates loaded battery voltages
     RoboRioSim.setVInVoltage(
         BatterySim.calculateDefaultBatteryLoadedVoltage(m_arm_topSim.getCurrentDrawAmps() + m_arm_bottomSim.getCurrentDrawAmps()));

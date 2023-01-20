@@ -1,4 +1,11 @@
 {
+  "HALProvider": {
+    "Other Devices": {
+      "window": {
+        "visible": false
+      }
+    }
+  },
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
@@ -39,8 +46,13 @@
     }
   },
   "NetworkTables": {
-    "Transitory Values": {
-      "open": false
+    "retained": {
+      "SmartDashboard": {
+        "SendableChooser[0]": {
+          "open": true
+        },
+        "open": true
+      }
     },
     "transitory": {
       "Shuffleboard": {
@@ -48,7 +60,12 @@
       },
       "SmartDashboard": {
         "Arm Sim": {
-          "open": true
+          "ArmPivot": {
+            "Arm Bottom": {
+              "open": true
+            },
+            "open": true
+          }
         },
         "open": true
       }

@@ -10,11 +10,18 @@
       "ypos": "23"
     }
   },
+  "Table": {
+    "0x542B5671,2": {
+      "Column 0  Width": "262",
+      "Column 1  Width": "286",
+      "RefScale": "13"
+    }
+  },
   "Window": {
     "###/SmartDashboard/Arm Sim": {
       "Collapsed": "0",
-      "Pos": "1182,343",
-      "Size": "607,595"
+      "Pos": "1027,295",
+      "Size": "880,595"
     },
     "###/SmartDashboard/SendableChooser[0]": {
       "Collapsed": "0",
@@ -38,8 +45,8 @@
     },
     "###NetworkTables": {
       "Collapsed": "0",
-      "Pos": "400,99",
-      "Size": "750,651"
+      "Pos": "399,96",
+      "Size": "750,849"
     },
     "###Other Devices": {
       "Collapsed": "0",
