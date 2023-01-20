@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 
 import com.ctre.phoenix.motorcontrol.TalonFXControlMode;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
+import com.ctre.phoenix.motorcontrol.TalonFXSimCollection;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 /**
@@ -35,13 +36,14 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
  */
 public class Simm extends SubsystemBase {
 
-  private WPI_TalonFX m_shoulderMotor;
-  private WPI_TalonFX m_elboMotor;
+private WPI_TalonFX m_shoulderMotor;
+private WPI_TalonFX m_elboMotor;
 
 public boolean kInverted, kSensorPhase;
 public Integer kPid_ID;
 public double kP, kI, kD, kIz, kFF, kMaxForward, kMaxReverse, kNomForward, kNomReverse, allowableClosedLoopError;
 private final double kArmEncoderDistPerPulse;
+
   // Simulation classes help us simulate what's going on, including gravity.
 private static final double m_armReduction = 600;
 private static final double m_arm_topMass = 10.0; // Kilograms
@@ -54,7 +56,7 @@ private static final int m_arm_top_max_angle = 260;
 private static final int m_arm_bottom_min_angle = 30; 
 private static final int m_arm_bottom_max_angle = 150; 
 
-  //SETPOINTS FOR PRESETS MODE (Uses Virtual 4 Bar Mode for smooth movement)
+  //SETPOINTS FOR PRESETS MODE
 private static final int stowedBottom = 90;
 private static final int stowedTop = 260;
 
@@ -76,17 +78,19 @@ private static final int scoreHighTop = 160;
 
 private final DCMotor m_armGearbox;
 //Can't create encoder for sim from falcon internal encoder. Needed to create external encoder and pidcontrol to use with sim.
-private final Encoder m_topEncoder, m_bottomEncoder;
-private final ProfiledPIDController m_topController, m_bottomController;
+//private final Encoder m_topEncoder, m_bottomEncoder;
+//private final ProfiledPIDController m_topController, m_bottomController;
 public double pidOutputTop, pidOutputBottom;
 
   // The P gain for the PID controller that drives this arm. 
-  private static final double kArmKp = 40.0;
-  private static final double kArmKi = 0.0;
+  //private static final double kArmKp = 40.0;
+  //private static final double kArmKi = 0.0;
 
   private final SingleJointedArmSim m_arm_topSim, m_arm_bottomSim;
-  private EncoderSim m_topEncoderSim, m_bottomEncoderSim;
 
+  //private EncoderSim m_topEncoderSim, m_bottomEncoderSim;
+
+  // Simulation Drawing Components
   private final Mechanism2d m_mech2d;
   private final MechanismRoot2d midNodeHome;
   private final MechanismLigament2d MidNode;
@@ -113,11 +117,24 @@ SendableChooser<Integer> presetChooser = new SendableChooser<Integer>();
     */
     public Simm() {
 
-        // initialize motor
+      double topArmLength = 27; //in
+      double bottomArmLength = 27; //in
+      double armPivotX = 55; //65 in = center of 30.5 bumper starting at 49.75
+      double armPivotY = 21.75;//in  
+
+
+       // initialize motor
         m_shoulderMotor  = new WPI_TalonFX(3, "rio");
         m_elboMotor  = new WPI_TalonFX(5, "rio");
 
-     
+      // Object for simulated inputs into Talon.
+        TalonFXSimCollection m_shoulderMotorSim = m_shoulderMotor.getSimCollection();
+        TalonFXSimCollection m_elboMotorSim = m_elboMotor.getSimCollection();
+
+ 
+
+
+
       // PID coefficients
       //SET UP SEPERATE FOR EACH JOINT
           kPid_ID = 00;
@@ -199,25 +216,21 @@ ADDED BOTH MOTORS HERE AS AN ARM SUBSYSTEM????
 
 
 ************************************************************************************************************************************************/
-m_topController = new ProfiledPIDController(kArmKp, kArmKi, 0, new TrapezoidProfile.Constraints(2, 5));
-m_bottomController = new ProfiledPIDController(kArmKp, kArmKi, 0, new TrapezoidProfile.Constraints(2, 5));
-m_topEncoder = new Encoder(0, 1);
-m_bottomEncoder = new Encoder(2, 3);
+//m_topController = new ProfiledPIDController(kArmKp, kArmKi, 0, new TrapezoidProfile.Constraints(2, 5));
+//m_bottomController = new ProfiledPIDController(kArmKp, kArmKi, 0, new TrapezoidProfile.Constraints(2, 5));
+//m_topEncoder = new Encoder(0, 1);
+//m_bottomEncoder = new Encoder(2, 3);
 
 
   // distance per pulse = (angle per revolution) / (pulses per revolution)
   //  = (2 * PI rads) / (4096 pulses)
   kArmEncoderDistPerPulse = 2.0 * Math.PI / 4096;
 
-  // The arm gearbox represents a gearbox containing two Falcon500 motors.
+  // The arm gearbox represents a gearbox containing two Falcon500 motors. Used for simulation.
   m_armGearbox = DCMotor.getFalcon500(2);
 
-
-
-
-
-  // This arm sim represents an arm that can travel from -75 degrees (rotated down front)
-  // to 255 degrees (rotated down in the back).
+  // This arm sim represents an arm that can travel from 'some' degrees (rotated down front)
+  // to 'some' degrees (rotated down in the back).
  m_arm_topSim =
       new SingleJointedArmSim(
           m_armGearbox,
@@ -242,51 +255,26 @@ m_bottomEncoder = new Encoder(2, 3);
               true,
               VecBuilder.fill(kArmEncoderDistPerPulse) // Add noise with a std-dev of 1 tick
               );
-  m_topEncoderSim = new EncoderSim(m_topEncoder);
-  m_bottomEncoderSim = new EncoderSim(m_bottomEncoder);
+ // m_topEncoderSim = new EncoderSim(m_topEncoder);
+ // m_bottomEncoderSim = new EncoderSim(m_bottomEncoder);
 
  // Create a Mechanism2d display of an Arm with a fixed ArmTower and moving Arm.
-  
- m_mech2d = new Mechanism2d(90, 90);
- midNodeHome = m_mech2d.getRoot("Mid Node", 27.83, 0);
- MidNode = midNodeHome.append(new MechanismLigament2d("Mid Cone Node", 34, 90, 10, new Color8Bit(Color.kWhite)));
- highNodeHome = m_mech2d.getRoot("High Node", 10.58, 0);
- HighNode = highNodeHome.append(new MechanismLigament2d("High Cone Node", 46, 90, 10, new Color8Bit(Color.kWhite)));
- gridHome = m_mech2d.getRoot("Grid Home", 49.75, 0);
- GridNode = gridHome.append(new MechanismLigament2d("Grid Wall", 49.75, 180, 50, new Color8Bit(Color.kWhite)));
- dsHome = m_mech2d.getRoot("Double Substation Home", 49.75, 37);
- DSRampor = dsHome.append(new MechanismLigament2d("Double Substation Ramp", 13.75, 180, 10, new Color8Bit(Color.kWhite)));
- m_armPivot = m_mech2d.getRoot("ArmPivot", 65, 21.75);
- m_arm_bottom =
-     m_armPivot.append(
-           new MechanismLigament2d(
-             "Arm Bottom",
-             27, 
-             -90, 
-             10, 
-             new Color8Bit(Color.kGold)));
+m_mech2d = new Mechanism2d(90, 90);
+midNodeHome = m_mech2d.getRoot("Mid Node", 27.83, 0);
+MidNode = midNodeHome.append(new MechanismLigament2d("Mid Cone Node", 34, 90, 10, new Color8Bit(Color.kWhite)));
+highNodeHome = m_mech2d.getRoot("High Node", 10.58, 0);
+HighNode = highNodeHome.append(new MechanismLigament2d("High Cone Node", 46, 90, 10, new Color8Bit(Color.kWhite)));
+gridHome = m_mech2d.getRoot("Grid Home", 49.75, 0);
+GridNode = gridHome.append(new MechanismLigament2d("Grid Wall", 49.75, 180, 50, new Color8Bit(Color.kWhite)));
+dsHome = m_mech2d.getRoot("Double Substation Home", 80.25, 37);//49.75 + bumper length of 30.5
+DSRampor = dsHome.append(new MechanismLigament2d("Double Substation Ramp", 13.75, 0, 10, new Color8Bit(Color.kWhite)));
+m_armPivot = m_mech2d.getRoot("ArmPivot", armPivotX, armPivotY);
+m_arm_bottom = m_armPivot.append(new MechanismLigament2d("Arm Bottom", bottomArmLength, -90, 10, new Color8Bit(Color.kHotPink)));
 m_arm_tower = m_armPivot.append(new MechanismLigament2d("ArmTower", 18, -90, 10, new Color8Bit(Color.kSilver)));
-
 m_aframe_1 = m_armPivot.append(new MechanismLigament2d("aframe1", 24, -50, 10, new Color8Bit(Color.kSilver)));
 m_bumper = gridHome.append(new MechanismLigament2d("Bumper", 30.5, 0, 60, new Color8Bit(Color.kRed)));
-m_arm_top =
-     m_arm_bottom.append(
-         new MechanismLigament2d(
-             "Arm Top",
-             28.5 + 3.0,
-             Units.radiansToDegrees(m_arm_topSim.getAngleRads()),
-             10,
-             new Color8Bit(Color.kPurple)));
-m_intake =
-   m_arm_top.append(
-       new MechanismLigament2d(
-           "Intake",
-           7,
-           Units.radiansToDegrees(m_arm_topSim.getAngleRads()),
-           40,
-           new Color8Bit(Color.kWhite)));
-
-
+m_arm_top = m_arm_bottom.append(new MechanismLigament2d("Arm Top", topArmLength + 3.0, Units.radiansToDegrees(m_arm_topSim.getAngleRads()),10, new Color8Bit(Color.kPurple)));
+m_intake = m_arm_top.append(new MechanismLigament2d("Intake", 7, Units.radiansToDegrees(m_arm_topSim.getAngleRads()), 40, new Color8Bit(Color.kYellow)));
 
 
     SmartDashboard.putNumber("Setpoint top (degrees)", 90);
@@ -321,11 +309,14 @@ m_intake =
               break;
           case 2:
             // Here, we run a PID control basesd on setpoints entered into SmartDashboard
-            pidOutputTop = m_topController.calculate(m_topEncoder.getDistance(), Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint top (degrees)", 0), m_arm_top_min_angle, m_arm_top_max_angle)));
-            m_elboMotor.setVoltage(pidOutputTop);
+            //pidOutputTop = m_topController.calculate(m_topEncoder.getDistance(), Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint top (degrees)", 0), m_arm_top_min_angle, m_arm_top_max_angle)));
+            double elbo_setpoint = Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint top (degrees)", 0), m_arm_top_min_angle, m_arm_top_max_angle));
+            m_elboMotor.set(TalonFXControlMode.Position, elbo_setpoint);
     
-            pidOutputBottom = m_bottomController.calculate(m_bottomEncoder.getDistance(), Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint bottom (degrees)", 0), m_arm_bottom_min_angle, m_arm_bottom_max_angle)));
-            m_shoulderMotor.setVoltage(pidOutputBottom);
+            //pidOutputBottom = m_bottomController.calculate(m_bottomEncoder.getDistance(), Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint bottom (degrees)", 0), m_arm_bottom_min_angle, m_arm_bottom_max_angle)));
+            double shoulder_setpoint = Units.degreesToRadians(MathUtil.clamp(SmartDashboard.getNumber("Setpoint bottom (degrees)", 0), m_arm_bottom_min_angle, m_arm_bottom_max_angle));
+            m_shoulderMotor.set(TalonFXControlMode.Position, shoulder_setpoint);
+    
             break;
           default: //also case 0
             //Run PID based on drop down menu of setpoints
@@ -363,10 +354,12 @@ m_intake =
             // Here, we run PID control where the arm moves to the selected setpoint.
             pidOutputTop = m_topController.calculate(m_topEncoder.getDistance(), Units.degreesToRadians(topSetpoint - bottomSetpoint));
             m_elboMotor.setVoltage(pidOutputTop);
-            SmartDashboard.putNumber("Setpoint bottom (degrees)", bottomSetpoint);
-            SmartDashboard.putNumber("Setpoint top (degrees)", topSetpoint);
+
             pidOutputBottom = m_bottomController.calculate(m_bottomEncoder.getDistance(), Units.degreesToRadians(bottomSetpoint));
             m_shoulderMotor.setVoltage(pidOutputBottom);
+
+            SmartDashboard.putNumber("Setpoint bottom (degrees)", bottomSetpoint);
+            SmartDashboard.putNumber("Setpoint top (degrees)", topSetpoint);
             break;
         }
       }
@@ -378,13 +371,15 @@ m_intake =
 
             // In this method, we update our simulation of what our arm is doing
     // First, we set our "inputs" (voltages)
-    m_arm_topSim.setInput(m_elboMotor.get() * RobotController.getBatteryVoltage());
+    //m_arm_topSim.setInput(m_elboMotor.get() * RobotController.getBatteryVoltage());
+    m_arm_topSim.setInput(m_elboMotor.getMotorOutputVoltage());
+    
     m_arm_bottomSim.setInput(m_shoulderMotor.get() * RobotController.getBatteryVoltage());
 
     // Next, we update it. The standard loop time is 20ms.
     m_arm_topSim.update(0.020);
     m_arm_bottomSim.update(0.020);
-
+//*********************
     // Finally, we set our simulated encoder's readings and simulated battery voltage
     m_topEncoderSim.setDistance(m_arm_topSim.getAngleRads());
     m_bottomEncoderSim.setDistance(m_arm_bottomSim.getAngleRads());

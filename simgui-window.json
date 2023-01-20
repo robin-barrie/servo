@@ -11,20 +11,35 @@
     }
   },
   "Window": {
+    "###/SmartDashboard/Arm Sim": {
+      "Collapsed": "0",
+      "Pos": "1182,343",
+      "Size": "607,595"
+    },
+    "###/SmartDashboard/SendableChooser[0]": {
+      "Collapsed": "0",
+      "Pos": "148,147",
+      "Size": "254,54"
+    },
+    "###/SmartDashboard/SendableChooser[1]": {
+      "Collapsed": "0",
+      "Pos": "142,206",
+      "Size": "254,54"
+    },
     "###FMS": {
       "Collapsed": "0",
-      "Pos": "16,331",
+      "Pos": "11,313",
       "Size": "283,146"
     },
     "###Joysticks": {
       "Collapsed": "0",
-      "Pos": "386,294",
+      "Pos": "391,6",
       "Size": "796,73"
     },
     "###NetworkTables": {
       "Collapsed": "0",
-      "Pos": "572,77",
-      "Size": "750,185"
+      "Pos": "400,99",
+      "Size": "750,651"
     },
     "###Other Devices": {
       "Collapsed": "0",
@@ -33,7 +48,7 @@
     },
     "###System Joysticks": {
       "Collapsed": "0",
-      "Pos": "1,518",
+      "Pos": "46,517",
       "Size": "192,218"
     },
     "###Timing": {

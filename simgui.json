@@ -19,6 +19,39 @@
       "/SmartDashboard/SendableChooser[1]": "String Chooser",
       "/SmartDashboard/Set Angle": "Command",
       "/SmartDashboard/Wait Command 1": "Command"
+    },
+    "windows": {
+      "/SmartDashboard/Arm Sim": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/SendableChooser[0]": {
+        "window": {
+          "visible": true
+        }
+      },
+      "/SmartDashboard/SendableChooser[1]": {
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  },
+  "NetworkTables": {
+    "Transitory Values": {
+      "open": false
+    },
+    "transitory": {
+      "Shuffleboard": {
+        "open": true
+      },
+      "SmartDashboard": {
+        "Arm Sim": {
+          "open": true
+        },
+        "open": true
+      }
     }
   }
 }

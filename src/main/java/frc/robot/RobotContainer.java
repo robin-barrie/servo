@@ -5,8 +5,13 @@ import frc.robot.commands.Chassis.*;
 import frc.robot.commands.Elbo.*;
 import frc.robot.commands.Shoulder.*;
 import frc.robot.subsystems.*;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,19 +41,14 @@ private final XboxController xboxController1 = new XboxController(0);
 
   // A chooser for autonomous commands
   SendableChooser<Command> m_chooser = new SendableChooser<>();
-
+ 
   /**
   * The container for the robot.  Contains subsystems, OI devices, and commands.
   */
   private RobotContainer() {
 
-
-    //m_elbo.setDefaultCommand(new JoystickDriveMotor(xboxController1, m_elbo));
-    m_chassis.setDefaultCommand(new JoystickDriveMecanum(xboxController1, m_chassis));
-
-    
-
     // Smartdashboard Subsystems
+
 
 
     // SmartDashboard Buttons
@@ -57,38 +57,18 @@ private final XboxController xboxController1 = new XboxController(0);
     SmartDashboard.putData("Wait Command 1", new WaitCommand1(1));
     SmartDashboard.putData("Set Angle", new SetPosition(10.0, m_shoulder));
 
-    // Configure the button bindings
-    configureButtonBindings();
-    // Create some buttons
-    final JoystickButton A = new JoystickButton(xboxController1, 1);
-    final JoystickButton B = new JoystickButton(xboxController1, 2);
-    final JoystickButton X = new JoystickButton(xboxController1, 3);
-    final JoystickButton Y = new JoystickButton(xboxController1, 4);
-    final JoystickButton dpadUp = new JoystickButton(xboxController1, 5);
-    final JoystickButton dpadRight = new JoystickButton(xboxController1, 6);
-    final JoystickButton dpadDown = new JoystickButton(xboxController1, 7);
-    final JoystickButton dpadLeft = new JoystickButton(xboxController1, 8);
-    final JoystickButton l2 = new JoystickButton(xboxController1, 9);
-    final JoystickButton r2 = new JoystickButton(xboxController1, 10);
-    final JoystickButton l1 = new JoystickButton(xboxController1, 11);
-    final JoystickButton r1 = new JoystickButton(xboxController1, 12);
-
- // Connect the buttons to commands
-   A.onTrue(new SetPosition(0.0, m_shoulder));
-   B.onTrue(new SetPosition(2048.0, m_shoulder));
-   X.onTrue(new SetSpeed(0.5, m_shoulder));
-   Y.onTrue(new SetSpeed(0.0, m_shoulder));
-   dpadUp.onTrue(new ButtonDriveMotor(0.5, m_elbo));
-   dpadDown.onTrue(new ButtonDriveMotor(-0.5, m_elbo));
-
-    // Configure default commands
-
-
     // Configure autonomous sendable chooser
-    
     m_chooser.setDefaultOption("Autonomous Command", new AutonomousCommand());
 
     SmartDashboard.putData("Auto Mode", m_chooser);
+
+    // Configure the button bindings
+    configureButtonBindings();
+
+    // Configure default commands
+        //m_elbo.setDefaultCommand(new JoystickDriveMotor(xboxController1, m_elbo));
+        m_chassis.setDefaultCommand(new JoystickDriveMecanum(xboxController1, m_chassis));
+
   }
 
   public static RobotContainer getInstance() {
@@ -103,9 +83,27 @@ private final XboxController xboxController1 = new XboxController(0);
    */
   private void configureButtonBindings() {
     
-// Create some buttons
-final JoystickButton xboxButtonA = new JoystickButton(xboxController1, XboxController.Button.kA.value);        
-xboxButtonA.onTrue(new Command1().withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+    // Create some buttons
+    final JoystickButton A = new JoystickButton(xboxController1, XboxController.Button.kA.value);
+    final JoystickButton B = new JoystickButton(xboxController1, 2);
+    final JoystickButton X = new JoystickButton(xboxController1, 3);
+    final JoystickButton Y = new JoystickButton(xboxController1, 4);
+    final JoystickButton dpadUp = new JoystickButton(xboxController1, 5);
+    final JoystickButton dpadRight = new JoystickButton(xboxController1, 6);
+    final JoystickButton dpadDown = new JoystickButton(xboxController1, 7);
+    final JoystickButton dpadLeft = new JoystickButton(xboxController1, 8);
+    final JoystickButton l2 = new JoystickButton(xboxController1, 9);
+    final JoystickButton r2 = new JoystickButton(xboxController1, 10);
+    final JoystickButton l1 = new JoystickButton(xboxController1, 11);
+    final JoystickButton r1 = new JoystickButton(xboxController1, 12);
+
+    // Connect the buttons to commands
+    A.onTrue(new SetPosition(0.0, m_shoulder));
+    B.onTrue(new SetPosition(2048.0, m_shoulder));
+    X.onTrue(new SetSpeed(0.5, m_shoulder));
+    Y.onTrue(new SetSpeed(0.0, m_shoulder));
+    dpadUp.onTrue(new ButtonDriveMotor(0.5, m_elbo));
+    dpadDown.onTrue(new ButtonDriveMotor(-0.5, m_elbo));
                         
   }
 
